@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
@@ -26,6 +26,33 @@ import { useForm } from "react-hook-form"
 export default function ClientSchedulePage() {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [selectedTab, setSelectedTab] = useState("upcoming")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    try {
+      setDate(newDate)
+    } catch (error) {
+      console.error("Error changing date:", error)
+    }
+  }
+
+  // Simulate data fetching
+  useEffect(() => {
+    const fetchScheduleData = async () => {
+      try {
+        setIsLoading(true)
+        // In a real app, this would fetch data from an API
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error fetching schedule data:", error)
+        setIsLoading(false)
+      }
+    }
+
+    fetchScheduleData()
+  }, [])
 
   // Mock data for scheduled collections
   const scheduledCollections = [
@@ -95,9 +122,15 @@ export default function ClientSchedulePage() {
     },
   })
 
-  const onSubmit = (data) => {
-    console.log(data)
-    // In a real app, this would send the data to the server
+  const onSubmit = (data: any) => {
+    try {
+      console.log(data)
+      // In a real app, this would send the data to the server
+      // Show success message to user
+    } catch (error) {
+      console.error("Error scheduling collection:", error)
+      // Show error message to user
+    }
   }
 
   return (
@@ -221,96 +254,127 @@ export default function ClientSchedulePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-  <CardHeader>
-    <CardTitle>Collection Schedule</CardTitle>
-    <CardDescription>View and manage your upcoming collections</CardDescription>
-    <Tabs defaultValue={selectedTab} onValueChange={setSelectedTab} className="mt-4">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-        <TabsTrigger value="recurring">Recurring</TabsTrigger>
-      </TabsList>
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Collection Schedule</CardTitle>
+              <CardDescription>View and manage your upcoming collections</CardDescription>
+              <Tabs defaultValue={selectedTab} onValueChange={setSelectedTab} className="mt-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                  <TabsTrigger value="recurring">Recurring</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="upcoming" className="mt-0">
+                    <div className="space-y-4">
+                      {scheduledCollections.map((collection) => (
+                        <div
+                          key={collection.id}
+                          className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="bg-primary/10 p-2 rounded-full">
+                              <Trash2 className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{collection.type}</h4>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Clock className="mr-1 h-4 w-4" />
+                                {collection.date}, {collection.time}
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground mt-1">
+                                <MapPin className="mr-1 h-4 w-4" />
+                                {collection.address}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="default">Scheduled</Badge>
+                            <Button variant="outline" size="sm">
+                              Reschedule
+                            </Button>
+                            <Button variant="destructive" size="sm">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="recurring" className="mt-0">
+                    <div className="space-y-4">
+                      {recurringCollections.map((collection) => (
+                        <div
+                          key={collection.id}
+                          className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="bg-primary/10 p-2 rounded-full">
+                              <CalendarPlus className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{collection.type}</h4>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Clock className="mr-1 h-4 w-4" />
+                                {collection.frequency} on {collection.day}, {collection.time}
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground mt-1">
+                                <MapPin className="mr-1 h-4 w-4" />
+                                {collection.address}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm">
+                              Edit
+                            </Button>
+                            <Button variant="destructive" size="sm">
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Make sure TabsContent is a direct child of Tabs */}
-      <TabsContent value="upcoming" className="mt-0">
-        <div className="space-y-4">
-          {scheduledCollections.map((collection) => (
-            <div
-              key={collection.id}
-              className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-            >
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Trash2 className="h-5 w-5 text-primary" />
+          <Card>
+            <CardHeader>
+              <CardTitle>Collection Calendar</CardTitle>
+              <CardDescription>View your scheduled collections</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Calendar mode="single" selected={date} onSelect={handleDateChange} className="rounded-md border" />
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-primary"></div>
+                  <span className="text-sm">General Waste</span>
                 </div>
-                <div>
-                  <h4 className="font-medium">{collection.type}</h4>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-1 h-4 w-4" />
-                    {collection.date}, {collection.time}
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground mt-1">
-                    <MapPin className="mr-1 h-4 w-4" />
-                    {collection.address}
-                  </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm">Recyclables</span>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="default">Scheduled</Badge>
-                <Button variant="outline" size="sm">
-                  Reschedule
-                </Button>
-                <Button variant="destructive" size="sm">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </TabsContent>
-
-      <TabsContent value="recurring" className="mt-0">
-        <div className="space-y-4">
-          {recurringCollections.map((collection) => (
-            <div
-              key={collection.id}
-              className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-            >
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <CalendarPlus className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                  <span className="text-sm">Green Waste</span>
                 </div>
-                <div>
-                  <h4 className="font-medium">{collection.type}</h4>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-1 h-4 w-4" />
-                    {collection.frequency} on {collection.day}, {collection.time}
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground mt-1">
-                    <MapPin className="mr-1 h-4 w-4" />
-                    {collection.address}
-                  </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <span className="text-sm">Hazardous Waste</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
-                <Button variant="destructive" size="sm">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </TabsContent>
-    </Tabs>
-  </CardHeader>
-  <CardContent>
-    {/* TabsContent is already inside Tabs, so this should work */}
-  </CardContent>
-</Card>
-
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>
